@@ -15,6 +15,8 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if update.effective_chat:
+        return
     keyboard = [
         [InlineKeyboardButton("🌐 سایتمون", url=lnk.website)],
         [
@@ -45,6 +47,7 @@ def main() -> None:
     application = Application.builder().token(tkn).build()
 
     application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("id", id))
 
     application.run_polling(allowed_updates=Update.ALL_TYPES)
 
