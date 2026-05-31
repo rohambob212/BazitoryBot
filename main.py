@@ -55,11 +55,12 @@ async def ban(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         return
 
     baned = update.message.reply_to_message.from_user
+    if baned == update.effective_user:
+        await update.message.reply_text("داش چرا میخوای خودکشی کنی ؟ 😭")
     baned_member = await update.effective_chat.get_member(baned.id)
     if baned_member.status in [ChatMemberStatus.ADMINISTRATOR, ChatMemberStatus.OWNER]:
         await update.message.reply_text("داش نمیتونی یه ادمین رو بن کنی 😭")
         return
-
     await context.bot.ban_chat_member(chat_id=update.effective_chat.id, user_id=baned.id)
     await update.message.reply_text(f"{baned.first_name} بن شد")
 
