@@ -1,11 +1,10 @@
 import logging
-
 from telegram.constants import ChatType, ChatMemberStatus
-
+import json as js
 import links as lnk
 import names as nms
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
-from telegram.ext import Application, CommandHandler, ContextTypes, filters, MessageHandler
+from telegram.ext import Application, CommandHandler, ContextTypes, filters, MessageHandler, CallbackQueryHandler
 # from scraper import getgames
 from asyncio import create_task
 # games : list = list(getgames())
@@ -16,9 +15,17 @@ logging.basicConfig(
 logging.getLogger("httpx").setLevel(logging.WARNING)
 
 logger = logging.getLogger(__name__)
-
+banlist : dict = {}
 #bancs : list[str] = ["ban", "!ban", "بن", "!بن"]
 bancs : list[str] = ["ban", "!ban", "بن", "!بن"]
+
+def loadDB():
+    with open("badDB.json ", 'r', encoding='utf-8') as f:
+        return js.load(f)
+
+def saveDB(data):
+    with open("badDB.json ", 'w', encoding='utf-8') as f:
+        return js.dump(data, f, indent=2, ensure_ascii=False)
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if update.effective_chat.type != ChatType.PRIVATE:
@@ -63,7 +70,32 @@ async def ban(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await update.message.reply_text("داش نمیتونی یه ادمین رو بن کنی 😭")
         return
     await context.bot.ban_chat_member(chat_id=update.effective_chat.id, user_id=baned.id)
-    await update.message.reply_text(f"{baned.first_name} بن شد")
+    await update.message.reply_to_message.delete()
+    banlist[str(baned.id)] = {"id": str(baned.id), "name": baned.name, "msg": update.message.reply_to_message.text, "date": str(update.message.date.date())}
+    saveDB(banlist)
+    await update.message.reply_text(f"بن شد {baned.name} ")
+
+async def banlist(update: Update, context: ContextTypes.DEFAULT_TYPE,pg: int) -> None:
+    global banlist
+    db = loadDB()
+    pg *= 5
+    kb : list[InlineKeyboardButton] = []
+    for key in db.keys()[(pg-5):(pg)]:
+        kb.append(InlineKeyboardButton(db[key]["name"], callback_data=("user"+key)))
+    await update.message.reply_text("برادران از دست رفته 🫡")
+
+async def unban(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if update.effective_chat.type == ChatType.PRIVATE:
+        await update.message.reply_text("فقط توی گروه ها میتونی آن بن کنی")
+        return
+
+async def callbackhandler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    callback = update.callback_query
+
+    await callback.answer()
+
+    if "gounbanpg" in callback.data:
+        num = int(callback.data[-1])
 
 
 # async def setgames(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -74,6 +106,7 @@ async def ban(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 def main() -> None:
     app = Application.builder().token(tkn).build()
 
+    app.add_handler(CallbackQueryHandler(callbackhandler))
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex(r"(?i)^(" + "|".join(bancs) + r")$"), ban))
     app.run_polling(allowed_updates=Update.ALL_TYPES)
