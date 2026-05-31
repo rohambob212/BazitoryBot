@@ -25,7 +25,7 @@ def loadDB():
 
 def saveDB(data):
     with open("badDB.json ", 'w', encoding='utf-8') as f:
-        return js.dump(data, f, indent=2, ensure_ascii=False)
+        js.dump(data, f, indent=2, ensure_ascii=False)
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if update.effective_chat.type != ChatType.PRIVATE:
@@ -71,7 +71,7 @@ async def ban(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         return
     await context.bot.ban_chat_member(chat_id=update.effective_chat.id, user_id=baned.id)
     await update.message.reply_to_message.delete()
-    banlist[str(baned.id)] = {"id": str(baned.id), "name": baned.name, "msg": update.message.reply_to_message.text, "date": str(update.message.date.date())}
+    banlist[str(baned.id)] = {"id": str(baned.id), "name": baned.name, "msg": update.message.reply_to_message.text}
     saveDB(banlist)
     await update.message.reply_text(f"بن شد {baned.name} ")
 
