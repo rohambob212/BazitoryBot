@@ -5,7 +5,7 @@ from telegram.constants import ChatType, ChatMemberStatus
 import links as lnk
 import names as nms
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
-from telegram.ext import Application, CommandHandler, ContextTypes
+from telegram.ext import Application, CommandHandler, ContextTypes, filters, MessageHandler
 # from scraper import getgames
 from asyncio import create_task
 # games : list = list(getgames())
@@ -17,6 +17,7 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 
 logger = logging.getLogger(__name__)
 
+#bancs : list[str] = ["ban", "!ban", "بن", "!بن"]
 bancs : list[str] = ["ban", "!ban", "بن", "!بن"]
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -64,12 +65,11 @@ async def ban(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 #         pass
 
 def main() -> None:
-    application = Application.builder().token(tkn).build()
+    app = Application.builder().token(tkn).build()
 
-    application.add_handler(CommandHandler("start", start))
-    for b in bancs:
-        application.add_handler(CommandHandler(b, ban))
-    application.run_polling(allowed_updates=Update.ALL_TYPES)
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(MessageHandler(filters.TEXT & filters.Regex(r"(?i)^(" + "|".join(bancs) + r")$"), ban))
+    app.run_polling(allowed_updates=Update.ALL_TYPES)
 
 
 if __name__ == "__main__":
