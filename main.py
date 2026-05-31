@@ -1,6 +1,6 @@
 import logging
 
-from telegram.constants import ChatType
+from telegram.constants import ChatType, ChatMemberStatus
 
 import links as lnk
 import names as nms
@@ -40,10 +40,20 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text(nms.stxt, reply_markup=reply_markup)
 
 async def ban(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if update.effective_chat.type == ChatType.PRIVATE:
+        await update.message.reply_text("فقط توی گروه ها میتونی بن کنی")
+        return
+
+    baner = await update.effective_chat.get_member(update.effective_user.id)
+    if baner.status not in [ChatMemberStatus.ADMINISTRATOR, ChatMemberStatus.OWNER]:
+        return
+
     if not update.message.reply_to_message:
         await update.message.reply_text("برای بن کردن باید به مسیج ریپلای بدی 😭")
         return
     baned = update.message.reply_to_message.from_user
+    if baned.status in [ChatMemberStatus.ADMINISTRATOR, ChatMemberStatus.OWNER]:
+        await update.message.reply_text("داش نمیتونی یه ادمین رو بن کنی 😭")
     await context.bot.banChatMember(chat_id=update.effective_chat.id, user_id=baned.id)
     await update.message.reply_text(f" بن شد{baned.first_name}")
 
