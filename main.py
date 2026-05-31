@@ -1,4 +1,7 @@
 import logging
+
+from telegram.constants import ChatType
+
 import links as lnk
 import names as nms
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
@@ -6,7 +9,7 @@ from telegram.ext import Application, CommandHandler, ContextTypes
 # from scraper import getgames
 from asyncio import create_task
 # games : list = list(getgames())
-tkn = "enter token here"
+tkn = ""
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
 )
@@ -14,8 +17,10 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 
 logger = logging.getLogger(__name__)
 
+bancs : list[str] = ["ban", "!ban", "بن", "!بن"]
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    if update.effective_chat:
+    if update.effective_chat.type != ChatType.PRIVATE:
         return
     keyboard = [
         [InlineKeyboardButton("🌐 سایتمون", url=lnk.website)],
@@ -34,8 +39,13 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     await update.message.reply_text(nms.stxt, reply_markup=reply_markup)
 
-async def id(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    print(update.effective_chat.id)
+async def ban(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if not update.message.reply_to_message:
+        await update.message.reply_text("برای بن کردن باید به مسیج ریپلای بدی 😭")
+        return
+    baned = update.message.reply_to_message.from_user
+    await context.bot.banChatMember(chat_id=update.effective_chat.id, user_id=baned.id)
+    await update.message.reply_text(f" بن شد{baned.first_name}")
 
 
 # async def setgames(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -47,8 +57,8 @@ def main() -> None:
     application = Application.builder().token(tkn).build()
 
     application.add_handler(CommandHandler("start", start))
-    application.add_handler(CommandHandler("id", id))
-
+    for b in bancs:
+        application.add_handler(CommandHandler(b, ban))
     application.run_polling(allowed_updates=Update.ALL_TYPES)
 
 
