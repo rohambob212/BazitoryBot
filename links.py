@@ -1,0 +1,6 @@
+website = "https://bazitory.com"
+chat = "t.me/BazitoryGP"
+channel = "t.me/BazitoryTV"
+zerotier = "https://bazitory.com/zerotier"
+donate = "https://donofa.ir/Bazitory/"
+games = "https://games.bazitory.com/"
