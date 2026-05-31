@@ -57,6 +57,7 @@ async def ban(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     baned = update.message.reply_to_message.from_user
     if baned == update.effective_user:
         await update.message.reply_text("داش چرا میخوای خودکشی کنی ؟ 😭")
+        return
     baned_member = await update.effective_chat.get_member(baned.id)
     if baned_member.status in [ChatMemberStatus.ADMINISTRATOR, ChatMemberStatus.OWNER]:
         await update.message.reply_text("داش نمیتونی یه ادمین رو بن کنی 😭")
