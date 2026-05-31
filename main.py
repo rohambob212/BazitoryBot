@@ -3,7 +3,7 @@ import links as lnk
 import names as nms
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import Application, CommandHandler, ContextTypes
-
+tkn = "enter token here"
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
 )
@@ -34,7 +34,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 
 def main() -> None:
-    application = Application.builder().token("8430969457:AAHE-adi815_uNVU0QveFaWIXehQ0gdf1Hg").build()
+    application = Application.builder().token(tkn).build()
 
     application.add_handler(CommandHandler("start", start))
 
