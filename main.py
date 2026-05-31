@@ -75,7 +75,7 @@ async def ban(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     saveDB(banlist)
     await update.message.reply_text(f"بن شد {baned.name} ")
 
-async def banlist(update: Update, context: ContextTypes.DEFAULT_TYPE,pg: int) -> None:
+async def banlistshow(update: Update, context: ContextTypes.DEFAULT_TYPE,pg: int) -> None:
     global banlist
     db = loadDB()
     pg *= 5
