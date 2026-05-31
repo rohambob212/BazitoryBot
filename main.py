@@ -70,7 +70,7 @@ async def ban(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await update.message.reply_text("داش نمیتونی یه ادمین رو بن کنی 😭")
         return
     await context.bot.ban_chat_member(chat_id=update.effective_chat.id, user_id=baned.id)
-    await update.message.reply_to_message.delete()
+    #await update.message.reply_to_message.delete()
     banlist[str(baned.id)] = {"id": str(baned.id), "name": baned.name, "msg": update.message.reply_to_message.text}
     saveDB(banlist)
     await update.message.reply_text(f"بن شد {baned.name} ")
