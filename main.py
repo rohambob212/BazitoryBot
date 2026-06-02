@@ -81,6 +81,8 @@ async def ban(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 async def banlistshow(update: Update, context: ContextTypes.DEFAULT_TYPE,pg: int = 1) -> None:
     global banlist
+    if update.effective_chat.type == ChatType.PRIVATE:
+        return
     baner = await update.effective_chat.get_member(update.effective_user.id)
     if baner.status not in [ChatMemberStatus.ADMINISTRATOR, ChatMemberStatus.OWNER]:
         return
@@ -125,16 +127,18 @@ async def callbackhandler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
     await callback.answer()
 
-    if "gobanlistpg" in callback.data:
+    if callback.data.startswith("gobanlistpg"):
         num = int(callback.data.replace("gobanlistpg", ""))
         await banlistshow(update, context, num)
-
+    if callback.data.startswith("user"):
+        id = int(callback.data.replace("user", ""))
+        db = loadDB()
+        await callback.edit_message_text(f"یوزرنیم : {db[id]["name"]}\nپیام : {db[id]["msg"]}")
 
 # async def setgames(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 #     ngames = getgames()
 #     if len(ngames) > len(games):
 #         pass
-
 def main() -> None:
     app = Application.builder().token(tkn).build()
 
