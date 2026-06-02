@@ -81,6 +81,9 @@ async def ban(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 async def banlistshow(update: Update, context: ContextTypes.DEFAULT_TYPE,pg: int = 1) -> None:
     global banlist
+    baner = await update.effective_chat.get_member(update.effective_user.id)
+    if baner.status not in [ChatMemberStatus.ADMINISTRATOR, ChatMemberStatus.OWNER]:
+        return
     db = loadDB()
     amount : int = 5
     rpg = pg
@@ -91,12 +94,13 @@ async def banlistshow(update: Update, context: ContextTypes.DEFAULT_TYPE,pg: int
     if dblen == 0:
         await update.message.reply_text("شما هنوز کسی را بن نکرده اید")
         return
-    if dblen <= 5:
+    if dblen <= amount:
         allpgs = 1
-    if dblen > 5:
-        allpgs = (dblen // 5) + 1
+    if dblen > amount:
+        allpgs = (dblen // amount) + 1
     if pg > dblen:
-        amount = pg
+        amount = pg - dblen
+        pg = dblen
     kb : list = []
     print(list(db.keys())[(pg-amount):(pg)])
     for key in list(db.keys())[(pg-amount):(pg)]:
