@@ -96,8 +96,7 @@ async def banlistshow(update: Update, context: ContextTypes.DEFAULT_TYPE,pg: int
     if dblen > 5:
         allpgs = (dblen // 5) + 1
     if pg > dblen:
-        pg = dblen
-        amount = pg - dblen
+        amount = pg
     kb : list = []
     print(list(db.keys())[(pg-amount):(pg)])
     for key in list(db.keys())[(pg-amount):(pg)]:
