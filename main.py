@@ -22,11 +22,11 @@ bancs : list[str] = ["ban", "!ban", "بن", "!بن"]
 banlistcs : list[str] = ["ban list", "!ban list", "لیست بن", "!لیست بن"]
 
 def loadDB():
-    with open("banDB.json", 'r', encoding='utf-8') as f:
+    with open("BanDB.json", 'r', encoding='utf-8') as f:
         return js.load(f)
 
 def saveDB(data):
-    with open("banDB.json", 'w', encoding='utf-8') as f:
+    with open("BanDB.json", 'w', encoding='utf-8') as f:
         js.dump(data, f, indent=2, ensure_ascii=False)
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
