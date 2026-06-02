@@ -100,9 +100,10 @@ async def banlistshow(update: Update, context: ContextTypes.DEFAULT_TYPE,pg: int
         pg = dblen
         amount = pg - dblen
     kb : list = []
+    print(list(db.keys())[(pg-amount):(pg)])
     for key in list(db.keys())[(pg-amount):(pg)]:
-        kb.append([InlineKeyboardButton(db[key]["name"], callback_data=("user"+key))])
-    kb.append([InlineKeyboardButton(f"📄 صفحه : {pg}/{allpgs}", callback_data="pg")])
+        kb.append([InlineKeyboardButton(db[key]["name"].replace("@", ""), callback_data=("user"+key))])
+    kb.append([InlineKeyboardButton(f"📄 صفحه : {rpg}/{allpgs}", callback_data="pg")])
     pgmovers : list[InlineKeyboardButton] = []
     if pg < allpgs:
         pgmovers.append(InlineKeyboardButton("صفحه بعد ⬅️", callback_data=f"gobanlistpg{pg-1}"))
