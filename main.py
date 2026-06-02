@@ -80,7 +80,7 @@ async def ban(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     saveDB(banlist)
     await update.message.reply_text(f"بن شد {baned.name} ")
 
-async def banlistshow(update: Update, context: ContextTypes.DEFAULT_TYPE,pg: int = 0) -> None:
+async def banlistshow(update: Update, context: ContextTypes.DEFAULT_TYPE,pg: int = 1) -> None:
     global banlist
     db = loadDB()
     amount : int = 5
@@ -88,10 +88,11 @@ async def banlistshow(update: Update, context: ContextTypes.DEFAULT_TYPE,pg: int
     pg *= amount
     dblen : int = len(db.keys())
     print(dblen)
+    allpgs : int = 1
     if dblen == 0:
         await update.message.reply_text("شما هنوز کسی را بن نکرده اید")
         return
-    if dblen < 5:
+    if dblen <= 5:
         allpgs = 1
     if dblen > 5:
         allpgs = (dblen // 5) + 1
@@ -123,7 +124,7 @@ async def callbackhandler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
     if "gobanlistpg" in callback.data:
         num = int(callback.data[-1])
-        await banlistshow(pg=num)
+        await banlistshow(update, context, num)
 
 
 # async def setgames(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
