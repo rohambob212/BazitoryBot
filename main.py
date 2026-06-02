@@ -120,7 +120,7 @@ async def banlistshow(update: Update, context: ContextTypes.DEFAULT_TYPE,pg: int
     if update.message:
         await update.message.reply_text("برادران از دست رفته 🫡", reply_markup=InlineKeyboardMarkup(kb))
     else:
-        await update.message.edit_text("برادران از دست رفته 🫡", reply_markup=InlineKeyboardMarkup(kb))
+        await update.callback_query.edit_message_text("برادران از دست رفته 🫡", reply_markup=InlineKeyboardMarkup(kb))
 
 async def unban(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if update.effective_chat.type == ChatType.PRIVATE:
@@ -152,7 +152,7 @@ async def callbackhandler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         del banlist[id]
         saveDB(banlist)
         buser = await context.bot.get_chat(id)
-        await update.message.reply_text(f"آن بن شد {buser.name} ")
+        await callback.edit_message_text(f"آن بن شد {buser.name} ")
     if callback.data.startswith("gobanlistpg"):
         num = int(callback.data.replace("gobanlistpg", ""))
         await banlistshow(update, context, num)
