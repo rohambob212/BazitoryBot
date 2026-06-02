@@ -19,6 +19,7 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 bancs : list[str] = ["ban", "!ban", "بن", "!بن"]
 banlistcs : list[str] = ["ban list", "!ban list", "لیست بن", "!لیست بن"]
+unbancs : list[str] = ["unban", "!unban", "آن بن", "!آن بن"]
 
 def loadDB():
     with open("BanDB.json", 'r', encoding='utf-8') as f:
@@ -164,7 +165,7 @@ def main() -> None:
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex(r"(?i)^(" + "|".join(bancs) + r")$"), ban))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex(r"(?i)^(" + "|".join(banlistcs) + r")$"), banlistshow))
-
+    app.add_handler(MessageHandler(filters.TEXT & filters.Regex(r"(?i)^(" + "|".join(unbancs) + r")$"), unban))
     app.run_polling(allowed_updates=Update.ALL_TYPES)
 
 
