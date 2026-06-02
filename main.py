@@ -117,8 +117,10 @@ async def banlistshow(update: Update, context: ContextTypes.DEFAULT_TYPE,pg: int
     if rpg > 1:
         pgmovers.append(InlineKeyboardButton("➡️ صفحه قبل ", callback_data=f"gobanlistpg{rpg+1}"))
     kb.append(pgmovers)
-
-    await update.message.reply_text("برادران از دست رفته 🫡", reply_markup=InlineKeyboardMarkup(kb))
+    if update.message:
+        await update.message.reply_text("برادران از دست رفته 🫡", reply_markup=InlineKeyboardMarkup(kb))
+    else:
+        await update.message.edit_text("برادران از دست رفته 🫡", reply_markup=InlineKeyboardMarkup(kb))
 
 async def unban(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if update.effective_chat.type == ChatType.PRIVATE:
