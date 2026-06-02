@@ -18,8 +18,8 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 
 logger = logging.getLogger(__name__)
 banlist : dict = {}
-#bancs : list[str] = ["ban", "!ban", "بن", "!بن"]
 bancs : list[str] = ["ban", "!ban", "بن", "!بن"]
+banlistcs : list[str] = ["ban list", "!ban list", "لیست بن", "!لیست بن"]
 
 def loadDB():
     with open("banDB.json", 'r', encoding='utf-8') as f:
@@ -69,6 +69,7 @@ async def ban(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         return
     if baned == context.bot.get_me():
         await update.message.reply_text("چرا میخوای منو بکشی ؟ 😭")
+        return
     baned_member = await update.effective_chat.get_member(baned.id)
     if baned_member.status in [ChatMemberStatus.ADMINISTRATOR, ChatMemberStatus.OWNER]:
         await update.message.reply_text("نمیتونی یه ادمین رو بن کنی 😭")
@@ -79,13 +80,16 @@ async def ban(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     saveDB(banlist)
     await update.message.reply_text(f"بن شد {baned.name} ")
 
-async def banlistshow(update: Update, context: ContextTypes.DEFAULT_TYPE,pg: int) -> None:
+async def banlistshow(update: Update, context: ContextTypes.DEFAULT_TYPE,pg: int = 0) -> None:
     global banlist
     db = loadDB()
     amount : int = 5
     rpg = pg
     pg *= amount
     dblen : int = len(db.keys)
+    if dblen == 0:
+        await update.message.reply_text("شما هنوز کسی را بن نکرده اید")
+        return
     allpgs = (dblen - (dblen % 5)) + 1
     if pg > dblen:
         pg = dblen
@@ -114,7 +118,7 @@ async def callbackhandler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
     if "gobanlistpg" in callback.data:
         num = int(callback.data[-1])
-    banlistshow(pg=num)
+        await banlistshow(pg=num)
 
 
 # async def setgames(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -128,6 +132,8 @@ def main() -> None:
     app.add_handler(CallbackQueryHandler(callbackhandler))
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex(r"(?i)^(" + "|".join(bancs) + r")$"), ban))
+    app.add_handler(MessageHandler(filters.TEXT & filters.Regex(r"(?i)^(" + "|".join(banlistcs) + r")$"), banlistshow))
+
     app.run_polling(allowed_updates=Update.ALL_TYPES)
 
 
