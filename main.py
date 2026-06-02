@@ -149,11 +149,10 @@ async def callbackhandler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     if callback.data.startswith("unban"):
         id = callback.data.split("unban")[1]
         await context.bot.unbanChatMember(chat_id=update.effective_chat.id, user_id=id)
-        print(banlist)
         del banlist[str(id)]
         saveDB(banlist)
         buser = await context.bot.get_chat(id)
-        await callback.edit_message_text(f"آن بن شد {buser.name} ")
+        await callback.edit_message_text(f"آن بن شد {buser.first_name} ")
     if callback.data.startswith("gobanlistpg"):
         num = int(callback.data.replace("gobanlistpg", ""))
         await banlistshow(update, context, num)
