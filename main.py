@@ -127,13 +127,14 @@ async def unban(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if baner.status not in [ChatMemberStatus.ADMINISTRATOR, ChatMemberStatus.OWNER]:
         return
     if not update.message.reply_to_message:
-        await update.message.reply_text("برای بن کردن باید به مسیج ریپلای بدی 😭")
+        await update.message.reply_text("برای آن بن کردن باید به مسیج ریپلای بدی 😭")
         return
     baned = update.message.reply_to_message.from_user
     if baned.id in db.keys():
         await context.bot.unbanChatMember(chat_id=update.effective_chat.id, user_id=baned.id)
-        del banlist[baned.id]
+        del banlist[str(baned.id)]
         saveDB(banlist)
+        await update.message.reply_text(f"آن بن شد {baned.name} ")
     else:
         await update.message.reply_text("بن نیست")
 
@@ -146,6 +147,7 @@ async def callbackhandler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         await context.bot.unbanChatMember(chat_id=update.effective_chat.id, user_id=id)
         del banlist[id]
         saveDB(banlist)
+        await update.message.reply_text(f"آن بن شد {baned.name} ")
     if callback.data.startswith("gobanlistpg"):
         num = int(callback.data.replace("gobanlistpg", ""))
         await banlistshow(update, context, num)
