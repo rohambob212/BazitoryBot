@@ -17,7 +17,6 @@ logging.basicConfig(
 logging.getLogger("httpx").setLevel(logging.WARNING)
 
 logger = logging.getLogger(__name__)
-banlist : dict = {}
 bancs : list[str] = ["ban", "!ban", "بن", "!بن"]
 banlistcs : list[str] = ["ban list", "!ban list", "لیست بن", "!لیست بن"]
 
@@ -28,7 +27,7 @@ def loadDB():
 def saveDB(data):
     with open("BanDB.json", 'w', encoding='utf-8') as f:
         js.dump(data, f, indent=2, ensure_ascii=False)
-
+banlist : dict = loadDB()
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if update.effective_chat.type != ChatType.PRIVATE:
         return
@@ -67,7 +66,7 @@ async def ban(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if baned == update.effective_user:
         await update.message.reply_text("چرا میخوای خودکشی کنی ؟ 😭")
         return
-    if baned == context.bot.get_me():
+    if baned == await context.bot.get_me():
         await update.message.reply_text("چرا میخوای منو بکشی ؟ 😭")
         return
     baned_member = await update.effective_chat.get_member(baned.id)
@@ -105,10 +104,10 @@ async def banlistshow(update: Update, context: ContextTypes.DEFAULT_TYPE,pg: int
         kb.append([InlineKeyboardButton(db[key]["name"].replace("@", ""), callback_data=("user"+key))])
     kb.append([InlineKeyboardButton(f"📄 صفحه : {rpg}/{allpgs}", callback_data="pg")])
     pgmovers : list[InlineKeyboardButton] = []
-    if pg < allpgs:
-        pgmovers.append(InlineKeyboardButton("صفحه بعد ⬅️", callback_data=f"gobanlistpg{pg-1}"))
-    if pg > 1:
-        pgmovers.append(InlineKeyboardButton("➡️ صفحه قبل ", callback_data=f"gobanlistpg{pg+1}"))
+    if rpg < allpgs:
+        pgmovers.append(InlineKeyboardButton("صفحه بعد ⬅️", callback_data=f"gobanlistpg{rpg-1}"))
+    if rpg > 1:
+        pgmovers.append(InlineKeyboardButton("➡️ صفحه قبل ", callback_data=f"gobanlistpg{rpg+1}"))
     kb.append(pgmovers)
 
     await update.message.reply_text("برادران از دست رفته 🫡", reply_markup=InlineKeyboardMarkup(kb))
@@ -124,7 +123,7 @@ async def callbackhandler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     await callback.answer()
 
     if "gobanlistpg" in callback.data:
-        num = int(callback.data[-1])
+        num = int(callback.data.replace("gobanlistpg", ""))
         await banlistshow(update, context, num)
 
 
