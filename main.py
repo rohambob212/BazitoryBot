@@ -91,7 +91,10 @@ async def banlistshow(update: Update, context: ContextTypes.DEFAULT_TYPE,pg: int
     if dblen == 0:
         await update.message.reply_text("شما هنوز کسی را بن نکرده اید")
         return
-    allpgs = (dblen - (dblen % 5)) + 1
+    if dblen < 5:
+        allpgs = 1
+    if dblen > 5:
+        allpgs = (dblen // 5) + 1
     if pg > dblen:
         pg = dblen
         amount = pg - dblen
