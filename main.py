@@ -96,7 +96,7 @@ async def banlistshow(update: Update, context: ContextTypes.DEFAULT_TYPE,pg: int
         pg = dblen
         amount = pg - dblen
     kb : list = []
-    for key in db.keys()[(pg-amount):(pg)]:
+    for key in list(db.keys())[(pg-amount):(pg)]:
         kb.append([InlineKeyboardButton(db[key]["name"], callback_data=("user"+key))])
     kb.append([InlineKeyboardButton(f"📄 صفحه : {pg}/{allpgs}")])
     pgmovers : list[InlineKeyboardButton] = []
@@ -104,8 +104,9 @@ async def banlistshow(update: Update, context: ContextTypes.DEFAULT_TYPE,pg: int
         pgmovers.append(InlineKeyboardButton("صفحه بعد ⬅️", callback_data=f"gobanlistpg{pg-1}"))
     if pg > 1:
         pgmovers.append(InlineKeyboardButton("➡️ صفحه قبل ", callback_data=f"gobanlistpg{pg+1}"))
+    kb.append(pgmovers)
 
-    await update.message.reply_text("برادران از دست رفته 🫡")
+    await update.message.reply_text("برادران از دست رفته 🫡", reply_markup=InlineKeyboardMarkup(kb))
 
 async def unban(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if update.effective_chat.type == ChatType.PRIVATE:
