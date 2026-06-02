@@ -10,7 +10,7 @@ from asyncio import create_task
 # games : list = list(getgames())
 tkn = ""
 with open("../token.txt", "r") as token:
-    tkn = token.read()
+    tkn = token.read().replace("\n", "")
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
 )
