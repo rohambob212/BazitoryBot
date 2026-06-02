@@ -107,7 +107,7 @@ async def banlistshow(update: Update, context: ContextTypes.DEFAULT_TYPE,pg: int
     print(list(db.keys())[(pg-amount):(pg)])
     for key in list(db.keys())[(pg-amount):(pg)]:
         kb.append([InlineKeyboardButton(db[key]["name"].replace("@", ""), callback_data=("user"+key))])
-    kb.append([InlineKeyboardButton(f"📄 صفحه : {rpg}/{allpgs}", callback_data="pg")])
+    kb.append([InlineKeyboardButton(f"📖 صفحه : {rpg}/{allpgs}", callback_data="pg")])
     pgmovers : list[InlineKeyboardButton] = []
     if rpg < allpgs:
         pgmovers.append(InlineKeyboardButton("صفحه بعد ⬅️", callback_data=f"gobanlistpg{rpg-1}"))
@@ -121,19 +121,37 @@ async def unban(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if update.effective_chat.type == ChatType.PRIVATE:
         await update.message.reply_text("فقط توی گروه ها میتونی آن بن کنی")
         return
+    db = loadDB()
+    baner = await update.effective_chat.get_member(update.effective_user.id)
+    if baner.status not in [ChatMemberStatus.ADMINISTRATOR, ChatMemberStatus.OWNER]:
+        return
+    if not update.message.reply_to_message:
+        await update.message.reply_text("برای بن کردن باید به مسیج ریپلای بدی 😭")
+        return
+    baned = update.message.reply_to_message.from_user
+    if baned.id in db.keys():
+        await context.bot.unbanChatMember(chat_id=update.effective_chat.id, user_id=baned.id)
+        del banlist[baned.id]
+        saveDB(banlist)
+    else:
+        await update.message.reply_text("بن نیست")
 
 async def callbackhandler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     callback = update.callback_query
 
     await callback.answer()
-
+    if callback.data.startswith("unban"):
+        id = callback.data.split("unban")[1]
+        await context.bot.unbanChatMember(chat_id=update.effective_chat.id, user_id=id)
+        del banlist[id]
+        saveDB(banlist)
     if callback.data.startswith("gobanlistpg"):
         num = int(callback.data.replace("gobanlistpg", ""))
         await banlistshow(update, context, num)
     if callback.data.startswith("user"):
         id = int(callback.data.replace("user", ""))
         db = loadDB()
-        await callback.edit_message_text(f"یوزرنیم : {db[str(id)]["name"]}\nپیام : {db[str(id)]["msg"]}")
+        await callback.edit_message_text(f"یوزرنیم : {db[str(id)]["name"]}\nپیام : {db[str(id)]["msg"]}", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("آن بن",callback_data="unban"+str(id))],[InlineKeyboardButton("بازگشت به صفحه قبل 📄",callback_data="gobanlistpg1")]]))
 
 # async def setgames(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 #     ngames = getgames()
