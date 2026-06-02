@@ -133,7 +133,7 @@ async def callbackhandler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     if callback.data.startswith("user"):
         id = int(callback.data.replace("user", ""))
         db = loadDB()
-        await callback.edit_message_text(f"یوزرنیم : {db[id]["name"]}\nپیام : {db[id]["msg"]}")
+        await callback.edit_message_text(f"یوزرنیم : {db[str(id)]["name"]}\nپیام : {db[str(id)]["msg"]}")
 
 # async def setgames(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 #     ngames = getgames()
