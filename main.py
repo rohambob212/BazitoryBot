@@ -9,6 +9,8 @@ from telegram.ext import Application, CommandHandler, ContextTypes, filters, Mes
 from asyncio import create_task
 # games : list = list(getgames())
 tkn = ""
+with open("../token.txt", "r") as token:
+    tkn = token.read()
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
 )
@@ -20,11 +22,11 @@ banlist : dict = {}
 bancs : list[str] = ["ban", "!ban", "بن", "!بن"]
 
 def loadDB():
-    with open("badDB.json ", 'r', encoding='utf-8') as f:
+    with open("banDB.json", 'r', encoding='utf-8') as f:
         return js.load(f)
 
 def saveDB(data):
-    with open("badDB.json ", 'w', encoding='utf-8') as f:
+    with open("banDB.json", 'w', encoding='utf-8') as f:
         js.dump(data, f, indent=2, ensure_ascii=False)
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -63,11 +65,13 @@ async def ban(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     baned = update.message.reply_to_message.from_user
     if baned == update.effective_user:
-        await update.message.reply_text("داش چرا میخوای خودکشی کنی ؟ 😭")
+        await update.message.reply_text("چرا میخوای خودکشی کنی ؟ 😭")
         return
+    if baned == context.bot.get_me():
+        await update.message.reply_text("چرا میخوای منو بکشی ؟ 😭")
     baned_member = await update.effective_chat.get_member(baned.id)
     if baned_member.status in [ChatMemberStatus.ADMINISTRATOR, ChatMemberStatus.OWNER]:
-        await update.message.reply_text("داش نمیتونی یه ادمین رو بن کنی 😭")
+        await update.message.reply_text("نمیتونی یه ادمین رو بن کنی 😭")
         return
     await context.bot.ban_chat_member(chat_id=update.effective_chat.id, user_id=baned.id)
     #await update.message.reply_to_message.delete()
@@ -78,10 +82,24 @@ async def ban(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 async def banlistshow(update: Update, context: ContextTypes.DEFAULT_TYPE,pg: int) -> None:
     global banlist
     db = loadDB()
-    pg *= 5
-    kb : list[InlineKeyboardButton] = []
-    for key in db.keys()[(pg-5):(pg)]:
-        kb.append(InlineKeyboardButton(db[key]["name"], callback_data=("user"+key)))
+    amount : int = 5
+    rpg = pg
+    pg *= amount
+    dblen : int = len(db.keys)
+    allpgs = (dblen - (dblen % 5)) + 1
+    if pg > dblen:
+        pg = dblen
+        amount = pg - dblen
+    kb : list = []
+    for key in db.keys()[(pg-amount):(pg)]:
+        kb.append([InlineKeyboardButton(db[key]["name"], callback_data=("user"+key))])
+    kb.append([InlineKeyboardButton(f"📄 صفحه : {pg}/{allpgs}")])
+    pgmovers : list[InlineKeyboardButton] = []
+    if pg < allpgs:
+        pgmovers.append(InlineKeyboardButton("صفحه بعد ⬅️", callback_data=f"gobanlistpg{pg-1}"))
+    if pg > 1:
+        pgmovers.append(InlineKeyboardButton("➡️ صفحه قبل ", callback_data=f"gobanlistpg{pg+1}"))
+
     await update.message.reply_text("برادران از دست رفته 🫡")
 
 async def unban(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -94,8 +112,9 @@ async def callbackhandler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
     await callback.answer()
 
-    if "gounbanpg" in callback.data:
+    if "gobanlistpg" in callback.data:
         num = int(callback.data[-1])
+    banlistshow(pg=num)
 
 
 # async def setgames(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
