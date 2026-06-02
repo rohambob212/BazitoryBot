@@ -3,7 +3,7 @@ from telegram.constants import ChatType, ChatMemberStatus
 import json as js
 import links as lnk
 import names as nms
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, User
 from telegram.ext import Application, CommandHandler, ContextTypes, filters, MessageHandler, CallbackQueryHandler
 # from scraper import getgames
 from asyncio import create_task
@@ -130,7 +130,7 @@ async def unban(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await update.message.reply_text("برای آن بن کردن باید به مسیج ریپلای بدی 😭")
         return
     baned = update.message.reply_to_message.from_user
-    if baned.id in db.keys():
+    if str(baned.id) in db.keys():
         await context.bot.unbanChatMember(chat_id=update.effective_chat.id, user_id=baned.id)
         del banlist[str(baned.id)]
         saveDB(banlist)
@@ -147,7 +147,8 @@ async def callbackhandler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         await context.bot.unbanChatMember(chat_id=update.effective_chat.id, user_id=id)
         del banlist[id]
         saveDB(banlist)
-        await update.message.reply_text(f"آن بن شد {baned.name} ")
+        buser = await context.bot.get_chat(id)
+        await update.message.reply_text(f"آن بن شد {buser.name} ")
     if callback.data.startswith("gobanlistpg"):
         num = int(callback.data.replace("gobanlistpg", ""))
         await banlistshow(update, context, num)
