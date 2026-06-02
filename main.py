@@ -86,7 +86,7 @@ async def banlistshow(update: Update, context: ContextTypes.DEFAULT_TYPE,pg: int
     amount : int = 5
     rpg = pg
     pg *= amount
-    dblen : int = len(db.keys)
+    dblen : int = len(db.keys())
     print(dblen)
     if dblen == 0:
         await update.message.reply_text("شما هنوز کسی را بن نکرده اید")
