@@ -184,6 +184,7 @@ def main() -> None:
 
     app.add_handler(CallbackQueryHandler(callbackhandler))
     app.add_handler(CommandHandler("start", start))
+    app.add_handler(CommandHandler("tag", tag))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex(r"(?i)^(" + "|".join(bancs) + r")$"), ban))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex(r"(?i)^(" + "|".join(banlistcs) + r")$"), banlistshow))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex(r"(?i)^(" + "|".join(unbancs) + r")$"), unban))
