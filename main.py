@@ -50,7 +50,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text(nms.stxt, reply_markup=reply_markup)
 
 async def tag(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-   print(update.effective_chat.type)
+    print(update.effective_chat.type)
     if update.effective_chat.type == ChatType.PRIVATE:
         await update.message.reply_text("فقط توی گروه ها میتونی تگت رو عوض کنی")
         return
