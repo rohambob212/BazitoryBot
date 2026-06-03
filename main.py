@@ -196,10 +196,11 @@ async def mute(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await update.message.reply_text("نمیتونی یه ادمین رو سکوت کنی 😭")
         return
 
-    # پردازش زمان ارسالی (مثل 1m یا 2h)
+
     tokens = update.message.text.split()
     until_date = None
     duration_text = "همیشگی"
+
 
     if len(tokens) > 1:
         time_str = tokens[1]
@@ -219,12 +220,13 @@ async def mute(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             else:
                 raise ValueError()
                 
+
             until_date = datetime.now(timezone.utc) + delta
         except (ValueError, IndexError):
             await update.message.reply_text("فرمت زمان اشتباهه! نمونه صحیح: `mute 10m` یا `mute 2h`")
             return
 
-    # بستن تمام دسترسی‌های ارسال پیام
+
     permissions = ChatPermissions(
         can_send_messages=False,
         can_send_media_messages=False,
@@ -241,7 +243,8 @@ async def mute(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             until_date=until_date
         )
         
-        # ذخیره در دیتابیس سکوت
+
+        global mutelist
         mutelist[str(muted.id)] = {
             "id": str(muted.id),
             "name": muted.name,
