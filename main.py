@@ -22,12 +22,11 @@ bancs : list[str] = ["ban", "!ban", "بن", "!بن"]
 banlistcs : list[str] = ["ban list", "!ban list", "لیست بن", "!لیست بن"]
 unbancs : list[str] = ["unban", "!unban", "آن بن", "!آن بن"]
 
-# لیست کلمات کلیدی برای سکوت (جدید)
 mutecs : list[str] = ["mute", "!mute", "سکوت", "!سکوت"]
 mutelistcs : list[str] = ["mutelist", "!mutelist", "لیست سکوت", "!لیست سکوت"]
 unmutecs : list[str] = ["unmute", "!unmute", "حذف سکوت", "!حذف سکوت"]
 
-# توابع دیتابیس بن
+
 def loadDB():
     with open("BanDB.json", 'r', encoding='utf-8') as f:
         return js.load(f)
