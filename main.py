@@ -49,7 +49,11 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     await update.message.reply_text(nms.stxt, reply_markup=reply_markup)
 
-
+async def tag(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if update.effective_chat.type == ChatType.PRIVATE:
+        await update.message.reply_text("فقط توی گروه ها میتونی تگت رو عوض کنی")
+        return
+    await context.bot.set_chat_member_tag(update.effective_chat.id, update.message.from_user.id, update.message.text.replace("/tag ", ""))
 async def ban(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if update.effective_chat.type == ChatType.PRIVATE:
         await update.message.reply_text("فقط توی گروه ها میتونی بن کنی")
