@@ -256,7 +256,7 @@ async def mute(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 async def unmute(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if update.effective_chat.type == ChatType.PRIVATE:
-        await update.message.reply_text("فقط توی گروه ها میتونی آن سکوت کنی")
+        await update.message.reply_text("فقط توی گروه ها میتونی آن میوت کنی")
         return
 
     muter = await update.effective_chat.get_member(update.effective_user.id)
@@ -264,13 +264,12 @@ async def unmute(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         return
 
     if not update.message.reply_to_message:
-        await update.message.reply_text("برای آن سکوت کردن باید رو پیام کاربر ریپلای کنی 😭")
+        await update.message.reply_text("برای آن میوت کردن باید رو پیام کاربر ریپلای کنی 😭")
         return
 
     muted = update.message.reply_to_message.from_user
     db = loadMuteDB()
 
-    # باز کردن تمام دسترسی‌ها
     permissions = ChatPermissions(
         can_send_messages=True,
         can_send_media_messages=True,
@@ -290,9 +289,9 @@ async def unmute(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             global mutelist
             del mutelist[str(muted.id)]
             saveMuteDB(mutelist)
-            await update.message.reply_text(f"کاربر {muted.name} رفع سکوت شد 🎉")
+            await update.message.reply_text(f"کاربر {muted.name} رفع سکوت شد")
         else:
-            await update.message.reply_text("این کاربر در لیست سکوت من نیست، اما پرمیشن‌هاش باز شد.")
+            await update.message.reply_text("این کاربر در لیست سکوت من نیست، اما پرمیشن‌هاش باز شد. =)")
     except Exception as e:
         await update.message.reply_text(f"خطایی رخ داد: {e}")
 
@@ -306,7 +305,7 @@ async def mutelistshow(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
     db = loadMuteDB()
     if not db:
-        await update.message.reply_text("لیست سکوت خالی است 🕊️")
+        await update.message.reply_text("لیست سکوت خالی است")
         return
 
     text = "🤫 **لیست کاربران در حالت سکوت:**\n\n"
