@@ -3,23 +3,29 @@ from telegram.constants import ChatType, ChatMemberStatus
 import json as js
 import links as lnk
 import names as nms
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, User
+from datetime import datetime, timedelta, timezone
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, User, ChatPermissions
 from telegram.ext import Application, CommandHandler, ContextTypes, filters, MessageHandler, CallbackQueryHandler
-# from scraper import getgames
 from asyncio import create_task
-# games : list = list(getgames())
+
 tkn = ""
 with open("../token.txt", "r") as token:
     tkn = token.read().replace("\n", "")
+
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
 )
 logging.getLogger("httpx").setLevel(logging.WARNING)
-
 logger = logging.getLogger(__name__)
+#ban
 bancs : list[str] = ["ban", "!ban", "بن", "!بن"]
 banlistcs : list[str] = ["ban list", "!ban list", "لیست بن", "!لیست بن"]
 unbancs : list[str] = ["unban", "!unban", "آن بن", "!آن بن"]
+
+mutecs : list[str] = ["mute", "!mute", "سکوت", "!سکوت"]
+mutelistcs : list[str] = ["mutelist", "!mutelist", "لیست سکوت", "!لیست سکوت"]
+unmutecs : list[str] = ["unmute", "!unmute", "حذف سکوت", "!حذف سکوت"]
+
 
 def loadDB():
     with open("BanDB.json", 'r', encoding='utf-8') as f:
@@ -28,7 +34,23 @@ def loadDB():
 def saveDB(data):
     with open("BanDB.json", 'w', encoding='utf-8') as f:
         js.dump(data, f, indent=2, ensure_ascii=False)
+
 banlist : dict = loadDB()
+
+def loadMuteDB():
+    try:
+        with open("MuteDB.json", 'r', encoding='utf-8') as f:
+            return js.load(f)
+    except FileNotFoundError:
+        return {}
+
+def saveMuteDB(data):
+    with open("MuteDB.json", 'w', encoding='utf-8') as f:
+        js.dump(data, f, indent=2, ensure_ascii=False)
+
+mutelist : dict = loadMuteDB()
+
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if update.effective_chat.type != ChatType.PRIVATE:
         return
@@ -38,24 +60,21 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             InlineKeyboardButton("👥 گروه چت اصلی", url=lnk.chat),
             InlineKeyboardButton("🔈 کانال اطلاع رسانی", url=lnk.channel),
         ],
-        # [InlineKeyboardButton("poshtibani", url=lnk)],
         [InlineKeyboardButton("💸 دونیت", url=lnk.donate)],
         [InlineKeyboardButton("💫 سرور های zerotier", url=lnk.zerotier)],
         [InlineKeyboardButton("🧪 بازی های کانفیگ شده", url=lnk.games)],
-
     ]
-
     reply_markup = InlineKeyboardMarkup(keyboard)
-
     await update.message.reply_text(nms.stxt, reply_markup=reply_markup)
 
+
 async def tag(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    print(update.effective_chat.type)
     if update.effective_chat.type == ChatType.PRIVATE:
         await update.message.reply_text("فقط توی گروه ها میتونی تگت رو عوض کنی")
         return
     await context.bot.set_chat_member_tag(update.effective_chat.id, update.message.from_user.id, update.message.text.replace("/tag ", ""))
-    await update.message.reply_text(f"تگ شما به {update.message.text.replace("/tag ", "")} تغییر کرد")
+    await update.message.reply_text(f"تگ شما به {update.message.text.replace('/tag ', '')} تغییر کرد")
+
 
 async def ban(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if update.effective_chat.type == ChatType.PRIVATE:
@@ -82,12 +101,12 @@ async def ban(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await update.message.reply_text("نمیتونی یه ادمین رو بن کنی 😭")
         return
     await context.bot.ban_chat_member(chat_id=update.effective_chat.id, user_id=baned.id)
-    #await update.message.reply_to_message.delete()
     banlist[str(baned.id)] = {"id": str(baned.id), "name": baned.name, "msg": update.message.reply_to_message.text}
     saveDB(banlist)
     await update.message.reply_text(f"بن شد {baned.name} ")
 
-async def banlistshow(update: Update, context: ContextTypes.DEFAULT_TYPE,pg: int = 1) -> None:
+
+async def banlistshow(update: Update, context: ContextTypes.DEFAULT_TYPE, pg: int = 1) -> None:
     global banlist
     if update.effective_chat.type == ChatType.PRIVATE:
         return
@@ -99,7 +118,6 @@ async def banlistshow(update: Update, context: ContextTypes.DEFAULT_TYPE,pg: int
     rpg = pg
     pg *= amount
     dblen : int = len(db.keys())
-    print(dblen)
     allpgs : int = 1
     if dblen == 0:
         await update.message.reply_text("شما هنوز کسی را بن نکرده اید")
@@ -114,7 +132,6 @@ async def banlistshow(update: Update, context: ContextTypes.DEFAULT_TYPE,pg: int
     if pg < 5:
         amount = pg
     kb : list = []
-    print(list(db.keys())[(pg-amount):(pg)])
     for key in list(db.keys())[(pg-amount):(pg)]:
         kb.append([InlineKeyboardButton(db[key]["name"].replace("@", ""), callback_data=("user"+key))])
     kb.append([InlineKeyboardButton(f"📖 صفحه : {rpg}/{allpgs}", callback_data="pg")])
@@ -128,6 +145,7 @@ async def banlistshow(update: Update, context: ContextTypes.DEFAULT_TYPE,pg: int
         await update.message.reply_text("برادران از دست رفته 🫡", reply_markup=InlineKeyboardMarkup(kb))
     else:
         await update.callback_query.edit_message_text("برادران از دست رفته 🫡", reply_markup=InlineKeyboardMarkup(kb))
+
 
 async def unban(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if update.effective_chat.type == ChatType.PRIVATE:
@@ -149,9 +167,152 @@ async def unban(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     else:
         await update.message.reply_text("بن نیست")
 
+
+async def mute(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if update.effective_chat.type == ChatType.PRIVATE:
+        await update.message.reply_text("فقط توی گروه ها میتونی سکوت بزنی")
+        return
+
+    muter = await update.effective_chat.get_member(update.effective_user.id)
+    if muter.status not in [ChatMemberStatus.ADMINISTRATOR, ChatMemberStatus.OWNER]:
+        return
+
+    if not update.message.reply_to_message:
+        await update.message.reply_text("برای سکوت کردن باید رو پیام کاربر ریپلای کنی 😭")
+        return
+
+    muted = update.message.reply_to_message.from_user
+    if muted == update.effective_user:
+        await update.message.reply_text("نمیتونی خودت رو سکوت کنی! 😂")
+        return
+    if muted == await context.bot.get_me():
+        await update.message.reply_text("منو میخوای لال کنی؟ نکن ادمین عزیز 😭")
+        return
+    
+    muted_member = await update.effective_chat.get_member(muted.id)
+    if muted_member.status in [ChatMemberStatus.ADMINISTRATOR, ChatMemberStatus.OWNER]:
+        await update.message.reply_text("نمیتونی یه ادمین رو سکوت کنی 😭")
+        return
+
+    tokens = update.message.text.split()
+    until_date = None
+    duration_text = "همیشگی"
+
+    if len(tokens) > 1:
+        time_str = tokens[1]
+        try:
+            amount = int(time_str[:-1])
+            unit = time_str[-1].lower()
+            
+            if unit == 'm':
+                delta = timedelta(minutes=amount)
+                duration_text = f"{amount} دقیقه"
+            elif unit == 'h':
+                delta = timedelta(hours=amount)
+                duration_text = f"{amount} ساعت"
+            elif unit == 'd':
+                delta = timedelta(days=amount)
+                duration_text = f"{amount} روز"
+            else:
+                raise ValueError()
+                
+            until_date = datetime.now(timezone.utc) + delta
+        except (ValueError, IndexError):
+            await update.message.reply_text("فرمت زمان اشتباهه! نمونه صحیح: `mute 10m` یا `mute 2h`")
+            return
+
+    permissions = ChatPermissions(
+        can_send_messages=False,
+        can_send_media_messages=False,
+        can_send_polls=False,
+        can_send_other_messages=False,
+        can_add_web_page_previews=False
+    )
+
+    try:
+        await context.bot.restrict_chat_member(
+            chat_id=update.effective_chat.id,
+            user_id=muted.id,
+            permissions=permissions,
+            until_date=until_date
+        )
+        
+        mutelist[str(muted.id)] = {
+            "id": str(muted.id),
+            "name": muted.name,
+            "duration": duration_text
+        }
+        saveMuteDB(mutelist)
+        
+        await update.message.reply_text(f"کاربر {muted.name} برای {duration_text} سکوت شد 🤫")
+    except Exception as e:
+        await update.message.reply_text(f"خطایی رخ داد: {e}")
+
+
+async def unmute(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if update.effective_chat.type == ChatType.PRIVATE:
+        await update.message.reply_text("فقط توی گروه ها میتونی آن میوت کنی")
+        return
+
+    muter = await update.effective_chat.get_member(update.effective_user.id)
+    if muter.status not in [ChatMemberStatus.ADMINISTRATOR, ChatMemberStatus.OWNER]:
+        return
+
+    if not update.message.reply_to_message:
+        await update.message.reply_text("برای آن میوت کردن باید رو پیام کاربر ریپلای کنی 😭")
+        return
+
+    muted = update.message.reply_to_message.from_user
+    db = loadMuteDB()
+
+    permissions = ChatPermissions(
+        can_send_messages=True,
+        can_send_media_messages=True,
+        can_send_polls=True,
+        can_send_other_messages=True,
+        can_add_web_page_previews=True
+    )
+
+    try:
+        await context.bot.restrict_chat_member(
+            chat_id=update.effective_chat.id,
+            user_id=muted.id,
+            permissions=permissions
+        )
+
+        if str(muted.id) in db.keys():
+            global mutelist
+            del mutelist[str(muted.id)]
+            saveMuteDB(mutelist)
+            await update.message.reply_text(f"کاربر {muted.name} رفع سکوت شد")
+        else:
+            await update.message.reply_text("این کاربر در لیست سکوت من نیست، اما پرمیشن‌هاش باز شد. =)")
+    except Exception as e:
+        await update.message.reply_text(f"خطایی رخ داد: {e}")
+
+
+async def mutelistshow(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if update.effective_chat.type == ChatType.PRIVATE:
+        return
+    muter = await update.effective_chat.get_member(update.effective_user.id)
+    if muter.status not in [ChatMemberStatus.ADMINISTRATOR, ChatMemberStatus.OWNER]:
+        return
+
+    db = loadMuteDB()
+    if not db:
+        await update.message.reply_text("لیست سکوت خالی است")
+        return
+
+    text = "🤫 **لیست کاربران در حالت سکوت:**\n\n"
+    for user_id, info in db.items():
+        text += f"👤 کاربر: {info['name']} \n🆔 شناسه: `{user_id}`\n⏱ زمان: {info['duration']}\n"
+        text += "⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯\n"
+    
+    await update.message.reply_text(text, parse_mode="Markdown")
+
+
 async def callbackhandler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     callback = update.callback_query
-
     await callback.answer()
     if callback.data.startswith("unban"):
         usr = await update.effective_chat.get_member(update.effective_user.id)
@@ -175,21 +336,26 @@ async def callbackhandler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             return
         id = int(callback.data.replace("user", ""))
         db = loadDB()
-        await callback.edit_message_text(f"یوزرنیم : {db[str(id)]["name"]}\nپیام : {db[str(id)]["msg"]}", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("آن بن",callback_data="unban"+str(id))],[InlineKeyboardButton("بازگشت به صفحه قبل 📄",callback_data="gobanlistpg1")]]))
+        await callback.edit_message_text(f"یوزرنیم : {db[str(id)]['name']}\nپیام : {db[str(id)]['msg']}", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("آن بن",callback_data="unban"+str(id))],[InlineKeyboardButton("بازگشت به صفحه قبل 📄",callback_data="gobanlistpg1")]]))
 
-# async def setgames(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-#     ngames = getgames()
-#     if len(ngames) > len(games):
-#         pass
+
 def main() -> None:
     app = Application.builder().token(tkn).build()
 
     app.add_handler(CallbackQueryHandler(callbackhandler))
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("tag", tag))
+    
+    # هندلرهای Ban
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex(r"(?i)^(" + "|".join(bancs) + r")$"), ban))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex(r"(?i)^(" + "|".join(banlistcs) + r")$"), banlistshow))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex(r"(?i)^(" + "|".join(unbancs) + r")$"), unban))
+    
+    # timing
+    app.add_handler(MessageHandler(filters.TEXT & filters.Regex(r"(?i)^(" + "|".join(mutecs) + r")(\s|$)"), mute))
+    app.add_handler(MessageHandler(filters.TEXT & filters.Regex(r"(?i)^(" + "|".join(mutelistcs) + r")$"), mutelistshow))
+    app.add_handler(MessageHandler(filters.TEXT & filters.Regex(r"(?i)^(" + "|".join(unmutecs) + r")$"), unmute))
+
     app.run_polling(allowed_updates=Update.ALL_TYPES)
 
 
