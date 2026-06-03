@@ -3,7 +3,7 @@ from telegram.constants import ChatType, ChatMemberStatus, ChatPermissions
 import json as js
 import links as lnk
 import names as nms
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, User
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, User, ChatPermissions
 from telegram.ext import Application, CommandHandler, ContextTypes, filters, MessageHandler, CallbackQueryHandler
 # from scraper import getgames
 from asyncio import create_task
@@ -88,53 +88,6 @@ async def ban(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     saveDB(banlist)
     await update.message.reply_text(f"بن شد {baned.name} ")
 
-async def mute(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    if update.effective_chat.type == ChatType.PRIVATE:
-        await update.message.reply_text("فقط توی گروه ها میتونی میوت کنی")
-        return
-
-    muter = await update.effective_chat.get_member(update.effective_user.id)
-    if muter.status not in [ChatMemberStatus.ADMINISTRATOR, ChatMemberStatus.OWNER]:
-        return
-
-    if not update.message.reply_to_message:
-        await update.message.reply_text("برای میوت کردن باید به مسیج ریپلای بدی 😭")
-        return
-
-    muted = update.message.reply_to_message.from_user
-    if muted == update.effective_user:
-        await update.message.reply_text("نمیتونی خودت رو میوت کنی 😭")
-        return
-    if muted == await context.bot.get_me():
-        await update.message.reply_text("نمیتونی منو میوت کنی 😭")
-        return
-        
-    muted_member = await update.effective_chat.get_member(muted.id)
-    if muted_member.status in [ChatMemberStatus.ADMINISTRATOR, ChatMemberStatus.OWNER]:
-        await update.message.reply_text("نمیتونی یه ادمین رو میوت کنی 😭")
-        return
-
-    # Stripping permissions to send messages, media, etc.
-    muted_permissions = ChatPermissions(
-        can_send_messages=False,
-        can_send_audios=False,
-        can_send_documents=False,
-        can_send_photos=False,
-        can_send_videos=False,
-        can_send_video_notes=False,
-        can_send_voice_notes=False,
-        can_send_polls=False,
-        can_send_other_messages=False,
-        can_add_web_page_previews=False
-    )
-    
-    await context.bot.restrict_chat_member(
-        chat_id=update.effective_chat.id, 
-        user_id=muted.id, 
-        permissions=muted_permissions
-    )
-    await update.message.reply_text(f"میوت شد {muted.name} 🤫")
-
 async def banlistshow(update: Update, context: ContextTypes.DEFAULT_TYPE,pg: int = 1) -> None:
     global banlist
     if update.effective_chat.type == ChatType.PRIVATE:
@@ -197,6 +150,39 @@ async def unban(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     else:
         await update.message.reply_text("بن نیست")
 
+async def mute(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if update.effective_chat.type == ChatType.PRIVATE:
+        return
+
+    moderator = await update.effective_chat.get_member(update.effective_user.id)
+    if moderator.status not in [ChatMemberStatus.ADMINISTRATOR, ChatMemberStatus.OWNER]:
+        return
+
+    if not update.message.reply_to_message:
+        await update.message.reply_text("برای میوت کردن باید روی پیام طرف ریپلای کنی")
+        return
+
+    target = update.message.reply_to_message.from_user
+
+    if target.id == update.effective_user.id:
+        return
+
+    member = await update.effective_chat.get_member(target.id)
+
+    if member.status in [ChatMemberStatus.ADMINISTRATOR, ChatMemberStatus.OWNER]:
+        await update.message.reply_text("نمیتونی ادمین رو میوت کنی")
+        return
+
+    await context.bot.restrict_chat_member(
+        chat_id=update.effective_chat.id,
+        user_id=target.id,
+        permissions=ChatPermissions(can_send_messages=False)
+    )
+
+    await update.message.reply_text(
+        f"{target.first_name} میوت شد 🔇"
+    )
+
 async def callbackhandler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     callback = update.callback_query
 
@@ -232,7 +218,7 @@ def main() -> None:
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("tag", tag))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex(r"(?i)^(" + "|".join(bancs) + r")$"), ban))
-    app.add_handler(MessageHandler(filters.TEXT & filters.Regex(r"(?i)^(" + "|".join(mutecs) + r")$"), mute))
+    app.add_handler(MessageHandler(filters.TEXT & filters.Regex(r"(?i)^(" + "|".join(mutecs) + r")$"),mute))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex(r"(?i)^(" + "|".join(banlistcs) + r")$"), banlistshow))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex(r"(?i)^(" + "|".join(unbancs) + r")$"), unban))
     app.run_polling(allowed_updates=Update.ALL_TYPES)
