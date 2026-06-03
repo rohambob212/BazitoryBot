@@ -147,6 +147,9 @@ async def callbackhandler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
     await callback.answer()
     if callback.data.startswith("unban"):
+        usr = await update.effective_chat.get_member(update.effective_user.id)
+        if usr.status not in [ChatMemberStatus.ADMINISTRATOR, ChatMemberStatus.OWNER]:
+            return
         id = callback.data.split("unban")[1]
         await context.bot.unbanChatMember(chat_id=update.effective_chat.id, user_id=id)
         del banlist[str(id)]
@@ -154,9 +157,15 @@ async def callbackhandler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         buser = await context.bot.get_chat(id)
         await callback.edit_message_text(f"آن بن شد {buser.first_name} ")
     if callback.data.startswith("gobanlistpg"):
+        usr = await update.effective_chat.get_member(update.effective_user.id)
+        if usr.status not in [ChatMemberStatus.ADMINISTRATOR, ChatMemberStatus.OWNER]:
+            return
         num = int(callback.data.replace("gobanlistpg", ""))
         await banlistshow(update, context, num)
     if callback.data.startswith("user"):
+        usr = await update.effective_chat.get_member(update.effective_user.id)
+        if usr.status not in [ChatMemberStatus.ADMINISTRATOR, ChatMemberStatus.OWNER]:
+            return
         id = int(callback.data.replace("user", ""))
         db = loadDB()
         await callback.edit_message_text(f"یوزرنیم : {db[str(id)]["name"]}\nپیام : {db[str(id)]["msg"]}", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("آن بن",callback_data="unban"+str(id))],[InlineKeyboardButton("بازگشت به صفحه قبل 📄",callback_data="gobanlistpg1")]]))
