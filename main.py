@@ -196,12 +196,12 @@ async def mute(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await update.message.reply_text("نمیتونی یه ادمین رو سکوت کنی 😭")
         return
 
-
+    # اصلاح نحوه خواندن کامند و تایم
     tokens = update.message.text.split()
     until_date = None
     duration_text = "همیشگی"
 
-
+    # اگر چیزی بعد از کلمه کلیدی mute نوشته شده بود (مثلا 10m یا 1h)
     if len(tokens) > 1:
         time_str = tokens[1]
         try:
@@ -220,13 +220,13 @@ async def mute(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             else:
                 raise ValueError()
                 
-
+            # استفاده از timezone.utc برای تطابق با زمان کلاینت سرورهای تلگرام
             until_date = datetime.now(timezone.utc) + delta
         except (ValueError, IndexError):
             await update.message.reply_text("فرمت زمان اشتباهه! نمونه صحیح: `mute 10m` یا `mute 2h`")
             return
 
-
+    # بستن تمام دسترسی‌های ارسال پیام
     permissions = ChatPermissions(
         can_send_messages=False,
         can_send_media_messages=False,
@@ -243,7 +243,7 @@ async def mute(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             until_date=until_date
         )
         
-
+        # ذخیره در دیتابیس سکوت
         global mutelist
         mutelist[str(muted.id)] = {
             "id": str(muted.id),
@@ -255,68 +255,6 @@ async def mute(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await update.message.reply_text(f"کاربر {muted.name} برای {duration_text} سکوت شد 🤫")
     except Exception as e:
         await update.message.reply_text(f"خطایی رخ داد: {e}")
-
-
-async def unmute(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    if update.effective_chat.type == ChatType.PRIVATE:
-        await update.message.reply_text("فقط توی گروه ها میتونی آن میوت کنی")
-        return
-
-    muter = await update.effective_chat.get_member(update.effective_user.id)
-    if muter.status not in [ChatMemberStatus.ADMINISTRATOR, ChatMemberStatus.OWNER]:
-        return
-
-    if not update.message.reply_to_message:
-        await update.message.reply_text("برای آن میوت کردن باید رو پیام کاربر ریپلای کنی 😭")
-        return
-
-    muted = update.message.reply_to_message.from_user
-    db = loadMuteDB()
-
-    permissions = ChatPermissions(
-        can_send_messages=True,
-        can_send_media_messages=True,
-        can_send_polls=True,
-        can_send_other_messages=True,
-        can_add_web_page_previews=True
-    )
-
-    try:
-        await context.bot.restrict_chat_member(
-            chat_id=update.effective_chat.id,
-            user_id=muted.id,
-            permissions=permissions
-        )
-
-        if str(muted.id) in db.keys():
-            global mutelist
-            del mutelist[str(muted.id)]
-            saveMuteDB(mutelist)
-            await update.message.reply_text(f"کاربر {muted.name} رفع سکوت شد")
-        else:
-            await update.message.reply_text("این کاربر در لیست سکوت من نیست، اما پرمیشن‌هاش باز شد. =)")
-    except Exception as e:
-        await update.message.reply_text(f"خطایی رخ داد: {e}")
-
-
-async def mutelistshow(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    if update.effective_chat.type == ChatType.PRIVATE:
-        return
-    muter = await update.effective_chat.get_member(update.effective_user.id)
-    if muter.status not in [ChatMemberStatus.ADMINISTRATOR, ChatMemberStatus.OWNER]:
-        return
-
-    db = loadMuteDB()
-    if not db:
-        await update.message.reply_text("لیست سکوت خالی است")
-        return
-
-    text = "🤫 **لیست کاربران در حالت سکوت:**\n\n"
-    for user_id, info in db.items():
-        text += f"👤 کاربر: {info['name']} \n🆔 شناسه: `{user_id}`\n⏱ زمان: {info['duration']}\n"
-        text += "⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯\n"
-    
-    await update.message.reply_text(text, parse_mode="Markdown")
 
 
 async def callbackhandler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -359,7 +297,7 @@ def main() -> None:
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex(r"(?i)^(" + "|".join(banlistcs) + r")$"), banlistshow))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex(r"(?i)^(" + "|".join(unbancs) + r")$"), unban))
     
-    # timing
+    # اصلاح رجکس Mute برای پذیرش پارامترهای بعدی مانند فاصله و تایم
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex(r"(?i)^(" + "|".join(mutecs) + r")(\s|$)"), mute))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex(r"(?i)^(" + "|".join(mutelistcs) + r")$"), mutelistshow))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex(r"(?i)^(" + "|".join(unmutecs) + r")$"), unmute))
