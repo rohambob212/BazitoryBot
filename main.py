@@ -196,12 +196,14 @@ async def mute(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await update.message.reply_text("نمیتونی یه ادمین رو سکوت کنی 😭")
         return
 
+    # اصلاح نحوه خواندن کامند و تایم
+    tokens = update.message.text.split()
     until_date = None
     duration_text = "همیشگی"
 
-    # چک کردن آرگومان‌ها (مثل 10m یا 2h بعد از دستور)
-    if context.args:
-        time_str = context.args[0]
+    # اگر چیزی بعد از کلمه کلیدی mute نوشته شده بود (مثلا 10m یا 1h)
+    if len(tokens) > 1:
+        time_str = tokens[1]
         try:
             amount = int(time_str[:-1])
             unit = time_str[-1].lower()
@@ -218,11 +220,13 @@ async def mute(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             else:
                 raise ValueError()
                 
+            # استفاده از timezone.utc برای تطابق با زمان کلاینت سرورهای تلگرام
             until_date = datetime.now(timezone.utc) + delta
         except (ValueError, IndexError):
-            await update.message.reply_text("فرمت زمان اشتباهه! نمونه صحیح: `/mute 10m` یا `/mute 2h`")
+            await update.message.reply_text("فرمت زمان اشتباهه! نمونه صحیح: `mute 10m` یا `mute 2h`")
             return
 
+    # بستن تمام دسترسی‌های ارسال پیام
     permissions = ChatPermissions(
         can_send_messages=False,
         can_send_media_messages=False,
@@ -239,6 +243,7 @@ async def mute(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             until_date=until_date
         )
         
+        # ذخیره در دیتابیس سکوت
         global mutelist
         mutelist[str(muted.id)] = {
             "id": str(muted.id),
@@ -291,11 +296,6 @@ def main() -> None:
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex(r"(?i)^(" + "|".join(bancs) + r")$"), ban))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex(r"(?i)^(" + "|".join(banlistcs) + r")$"), banlistshow))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex(r"(?i)^(" + "|".join(unbancs) + r")$"), unban))
-    
-    # هندلرهای جدید و پایدار Mute بر اساس سیستم فرمان تلگرام
-    app.add_handler(CommandHandler("mute", mute))
-    app.add_handler(CommandHandler("mutelist", mutelistshow))
-    app.add_handler(CommandHandler("unmute", unmute))
 
     app.run_polling(allowed_updates=Update.ALL_TYPES)
 
