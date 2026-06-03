@@ -38,7 +38,6 @@ def saveDB(data):
 
 banlist : dict = loadDB()
 
-# توابع دیتابیس سکوت (جدید)
 def loadMuteDB():
     try:
         with open("MuteDB.json", 'r', encoding='utf-8') as f:
@@ -196,7 +195,6 @@ async def mute(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await update.message.reply_text("نمیتونی یه ادمین رو سکوت کنی 😭")
         return
 
-    # پردازش زمان ارسالی (مثل 1m یا 2h)
     tokens = update.message.text.split()
     until_date = None
     duration_text = "همیشگی"
@@ -224,7 +222,6 @@ async def mute(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             await update.message.reply_text("فرمت زمان اشتباهه! نمونه صحیح: `mute 10m` یا `mute 2h`")
             return
 
-    # بستن تمام دسترسی‌های ارسال پیام
     permissions = ChatPermissions(
         can_send_messages=False,
         can_send_media_messages=False,
@@ -241,7 +238,6 @@ async def mute(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             until_date=until_date
         )
         
-        # ذخیره در دیتابیس سکوت
         mutelist[str(muted.id)] = {
             "id": str(muted.id),
             "name": muted.name,
