@@ -1,9 +1,9 @@
 import logging
-from telegram.constants import ChatType, ChatMemberStatus, ChatPermissions
+from telegram.constants import ChatType, ChatMemberStatus
 import json as js
 import links as lnk
 import names as nms
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, User, ChatPermissions
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, User
 from telegram.ext import Application, CommandHandler, ContextTypes, filters, MessageHandler, CallbackQueryHandler
 # from scraper import getgames
 from asyncio import create_task
@@ -20,7 +20,6 @@ logger = logging.getLogger(__name__)
 bancs : list[str] = ["ban", "!ban", "بن", "!بن"]
 banlistcs : list[str] = ["ban list", "!ban list", "لیست بن", "!لیست بن"]
 unbancs : list[str] = ["unban", "!unban", "آن بن", "!آن بن"]
-mutecs : list[str] = ["mute", "!mute", "میوت", "!میوت"]
 
 def loadDB():
     with open("BanDB.json", 'r', encoding='utf-8') as f:
@@ -150,39 +149,6 @@ async def unban(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     else:
         await update.message.reply_text("بن نیست")
 
-async def mute(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    if update.effective_chat.type == ChatType.PRIVATE:
-        return
-
-    moderator = await update.effective_chat.get_member(update.effective_user.id)
-    if moderator.status not in [ChatMemberStatus.ADMINISTRATOR, ChatMemberStatus.OWNER]:
-        return
-
-    if not update.message.reply_to_message:
-        await update.message.reply_text("برای میوت کردن باید روی پیام طرف ریپلای کنی")
-        return
-
-    target = update.message.reply_to_message.from_user
-
-    if target.id == update.effective_user.id:
-        return
-
-    member = await update.effective_chat.get_member(target.id)
-
-    if member.status in [ChatMemberStatus.ADMINISTRATOR, ChatMemberStatus.OWNER]:
-        await update.message.reply_text("نمیتونی ادمین رو میوت کنی")
-        return
-
-    await context.bot.restrict_chat_member(
-        chat_id=update.effective_chat.id,
-        user_id=target.id,
-        permissions=ChatPermissions(can_send_messages=False)
-    )
-
-    await update.message.reply_text(
-        f"{target.first_name} میوت شد 🔇"
-    )
-
 async def callbackhandler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     callback = update.callback_query
 
@@ -211,6 +177,10 @@ async def callbackhandler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         db = loadDB()
         await callback.edit_message_text(f"یوزرنیم : {db[str(id)]["name"]}\nپیام : {db[str(id)]["msg"]}", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("آن بن",callback_data="unban"+str(id))],[InlineKeyboardButton("بازگشت به صفحه قبل 📄",callback_data="gobanlistpg1")]]))
 
+# async def setgames(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+#     ngames = getgames()
+#     if len(ngames) > len(games):
+#         pass
 def main() -> None:
     app = Application.builder().token(tkn).build()
 
@@ -218,7 +188,6 @@ def main() -> None:
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("tag", tag))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex(r"(?i)^(" + "|".join(bancs) + r")$"), ban))
-    app.add_handler(MessageHandler(filters.TEXT & filters.Regex(r"(?i)^(" + "|".join(mutecs) + r")$"),mute))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex(r"(?i)^(" + "|".join(banlistcs) + r")$"), banlistshow))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex(r"(?i)^(" + "|".join(unbancs) + r")$"), unban))
     app.run_polling(allowed_updates=Update.ALL_TYPES)
